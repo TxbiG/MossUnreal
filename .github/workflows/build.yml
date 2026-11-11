@@ -1,0 +1,112 @@
+name: Build and validate MossUnreal
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "MossUnreal.uplugin"
+      - "Source/**"
+      - "Config/**"
+      - "Docs/**"
+      - ".github/workflows/build.yml"
+  pull_request:
+    paths:
+      - "MossUnreal.uplugin"
+      - "Source/**"
+      - "Config/**"
+      - "Docs/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mossunreal-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate plugin metadata and package source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate plugin descriptor
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("MossUnreal.uplugin")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          assert data.get("FileVersion") == 3, "Unexpected Unreal plugin descriptor version"
+          modules = data.get("Modules", [])
+          assert any(m.get("Name") == "MossUnreal" for m in modules), \
+              "MossUnreal runtime module is missing"
+          print("MossUnreal.uplugin is valid.")
+          PY
+
+      - name: Validate required source files
+        run: |
+          test -f Source/MossUnreal/MossUnreal.Build.cs
+          test -f Source/MossUnreal/Public/MossUnreal.h
+          test -f Source/MossUnreal/Private/MossUnreal.cpp
+          test -f Source/MossUnreal/Public/MossPhysicsWorldSubsystem.h
+          test -f Source/MossUnreal/Private/MossPhysicsWorldSubsystem.cpp
+          test -f Source/MossUnreal/Public/MossPhysicsBodyComponent.h
+          test -f Source/MossUnreal/Private/MossPhysicsBodyComponent.cpp
+
+      - name: Create source package
+        run: |
+          mkdir -p artifacts/MossUnreal
+          cp MossUnreal.uplugin README.md LICENSE artifacts/MossUnreal/
+          cp -R Source Config Docs artifacts/MossUnreal/
+
+      - name: Upload validated source package
+        uses: actions/upload-artifact@v6
+        with:
+          name: MossUnreal-source-${{ github.sha }}
+          path: artifacts/MossUnreal/
+          if-no-files-found: error
+          retention-days: 14
+
+  unreal-build:
+    name: Compile plugin with Unreal Engine
+    # Configure a self-hosted Windows runner with Unreal Engine installed.
+    # Set repository variable ENABLE_UNREAL_BUILD to "true" to enable this job.
+    if: ${{ vars.ENABLE_UNREAL_BUILD == 'true' }}
+    runs-on: [self-hosted, Windows, UnrealEngine]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check Unreal installation
+        shell: pwsh
+        run: |
+          if (-not $env:UNREAL_ENGINE_ROOT) {
+            throw "Set UNREAL_ENGINE_ROOT on the self-hosted runner."
+          }
+          $uat = Join-Path $env:UNREAL_ENGINE_ROOT "Engine/Build/BatchFiles/RunUAT.bat"
+          if (-not (Test-Path $uat)) {
+            throw "RunUAT.bat not found at $uat"
+          }
+
+      - name: Build plugin
+        shell: pwsh
+        run: |
+          $uat = Join-Path $env:UNREAL_ENGINE_ROOT "Engine/Build/BatchFiles/RunUAT.bat"
+          $plugin = (Resolve-Path "MossUnreal.uplugin").Path
+          $output = Join-Path $PWD "artifacts/MossUnreal"
+          New-Item -ItemType Directory -Force -Path $output | Out-Null
+          & $uat BuildPlugin "-Plugin=$plugin" "-Package=$output" "-TargetPlatforms=Win64"
+          if ($LASTEXITCODE -ne 0) { throw "Unreal BuildPlugin failed." }
+
+      - name: Upload compiled plugin
+        uses: actions/upload-artifact@v6
+        with:
+          name: MossUnreal-Win64-${{ github.sha }}
+          path: artifacts/MossUnreal/
+          if-no-files-found: error
+          retention-days: 14
