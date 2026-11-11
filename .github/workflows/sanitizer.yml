@@ -1,0 +1,75 @@
+name: Native sanitizers
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "Native/**"
+      - "Source/NativeAdapter/**"
+      - ".github/workflows/sanitizer.yml"
+  pull_request:
+    paths:
+      - "Native/**"
+      - "Source/NativeAdapter/**"
+      - ".github/workflows/sanitizer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sanitizers:
+    name: AddressSanitizer and UndefinedBehaviorSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Detect native adapter project
+        id: detect
+        shell: bash
+        run: |
+          if [ -f Native/CMakeLists.txt ]; then
+            echo "source_dir=Native" >> "$GITHUB_OUTPUT"
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          elif [ -f Source/NativeAdapter/CMakeLists.txt ]; then
+            echo "source_dir=Source/NativeAdapter" >> "$GITHUB_OUTPUT"
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No standalone native adapter CMake project exists yet; sanitizer build is deferred."
+          fi
+
+      - name: Install build tools
+        if: steps.detect.outputs.available == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build
+
+      - name: Configure with sanitizers
+        if: steps.detect.outputs.available == 'true'
+        run: |
+          cmake -S "${{ steps.detect.outputs.source_dir }}" -B build-sanitized \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DMOSS_ENABLE_SANITIZERS=ON \
+            -DBUILD_TESTING=ON
+
+      - name: Build
+        if: steps.detect.outputs.available == 'true'
+        run: cmake --build build-sanitized --parallel
+
+      - name: Run tests under sanitizers
+        if: steps.detect.outputs.available == 'true'
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ctest --test-dir build-sanitized --output-on-failure
+
+      - name: Explain deferred native sanitizers
+        if: steps.detect.outputs.available != 'true'
+        run: |
+          echo "This repository currently contains Unreal-facing code only."
+          echo "Add a standalone Native/CMakeLists.txt adapter project and enable"
+          echo "MOSS_ENABLE_SANITIZERS in that CMake project to activate ASan/UBSan."
