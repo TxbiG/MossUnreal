@@ -1,0 +1,40 @@
+# --- Unreal Engine Generated Folders ---
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+Build/
+
+# --- IDE & Compiler Files ---
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.code-workspace
+*.xcworkspace
+*.xcodeproj
+Makefile
+CMakeLists.txt
+.qmake.stash
+
+# --- Compiled Intermediates ---
+*.obj
+*.o
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.a
+*.so
+*.dylib
+*.dll
+
+# --- OS & Logs ---
+.DS_Store
+Thumbs.db
+*.log
