@@ -1,3 +1,4 @@
+[![Build](https://github.com/TxbiG/MossUnreal/actions/workflows/build.yml/badge.svg)](https://github.com/TxbiG/MossUnity/actions/workflows/build.yml)
 # MossUnreal
 
 Native Unreal Engine integration for the [Moss Framework](https://github.com/TxbiG/Moss).
