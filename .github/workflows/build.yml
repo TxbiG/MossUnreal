@@ -7,6 +7,8 @@ on:
       - "MossUnreal.uplugin"
       - "Source/**"
       - "Config/**"
+      - "Content/**"
+      - "Resources/**"
       - "Docs/**"
       - ".github/workflows/build.yml"
   pull_request:
@@ -14,6 +16,8 @@ on:
       - "MossUnreal.uplugin"
       - "Source/**"
       - "Config/**"
+      - "Content/**"
+      - "Resources/**"
       - "Docs/**"
       - ".github/workflows/build.yml"
   workflow_dispatch:
@@ -62,7 +66,12 @@ jobs:
         run: |
           mkdir -p artifacts/MossUnreal
           cp MossUnreal.uplugin README.md LICENSE artifacts/MossUnreal/
-          cp -R Source Config Docs artifacts/MossUnreal/
+          cp -R Source artifacts/MossUnreal/
+          for dir in Config Content Resources Docs; do
+            if [ -d "$dir" ]; then
+              cp -R "$dir" artifacts/MossUnreal/
+            fi
+          done
 
       - name: Upload validated source package
         uses: actions/upload-artifact@v6
