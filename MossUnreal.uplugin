@@ -1,10 +1,10 @@
 {
   "FileVersion": 3,
-  "Version": 1,
-  "VersionName": "0.1.0",
+  "Version": 4,
+  "VersionName": "0.4.0",
   "FriendlyName": "Moss Unreal",
-  "Description": "Native Unreal Engine integration for the Moss Framework.",
-  "Category": "Physics",
+  "Description": "Native C++ and Unreal integration layer for the Moss Framework public APIs.",
+  "Category": "Developer",
   "CreatedBy": "TxbiG",
   "CanContainContent": false,
   "IsBetaVersion": true,
@@ -13,6 +13,11 @@
     {
       "Name": "MossUnreal",
       "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "MossUnrealTests",
+      "Type": "Editor",
       "LoadingPhase": "Default"
     }
   ]

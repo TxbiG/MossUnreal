@@ -6,19 +6,17 @@ on:
     paths:
       - "MossUnreal.uplugin"
       - "Source/**"
-      - "Config/**"
-      - "Content/**"
-      - "Resources/**"
+      - "Examples/**"
       - "Docs/**"
+      - "Scripts/**"
       - ".github/workflows/build.yml"
   pull_request:
     paths:
       - "MossUnreal.uplugin"
       - "Source/**"
-      - "Config/**"
-      - "Content/**"
-      - "Resources/**"
+      - "Examples/**"
       - "Docs/**"
+      - "Scripts/**"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -37,41 +35,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Validate plugin descriptor
-        run: |
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          path = Path("MossUnreal.uplugin")
-          data = json.loads(path.read_text(encoding="utf-8"))
-          assert data.get("FileVersion") == 3, "Unexpected Unreal plugin descriptor version"
-          modules = data.get("Modules", [])
-          assert any(m.get("Name") == "MossUnreal" for m in modules), \
-              "MossUnreal runtime module is missing"
-          print("MossUnreal.uplugin is valid.")
-          PY
-
-      - name: Validate required source files
-        run: |
-          test -f Source/MossUnreal/MossUnreal.Build.cs
-          test -f Source/MossUnreal/Public/MossUnreal.h
-          test -f Source/MossUnreal/Private/MossUnreal.cpp
-          test -f Source/MossUnreal/Public/MossPhysicsWorldSubsystem.h
-          test -f Source/MossUnreal/Private/MossPhysicsWorldSubsystem.cpp
-          test -f Source/MossUnreal/Public/MossPhysicsBodyComponent.h
-          test -f Source/MossUnreal/Private/MossPhysicsBodyComponent.cpp
+      - name: Validate plugin and source contract
+        run: python3 Scripts/validate_plugin.py
 
       - name: Create source package
         run: |
           mkdir -p artifacts/MossUnreal
           cp MossUnreal.uplugin README.md LICENSE artifacts/MossUnreal/
-          cp -R Source artifacts/MossUnreal/
-          for dir in Config Content Resources Docs; do
-            if [ -d "$dir" ]; then
-              cp -R "$dir" artifacts/MossUnreal/
-            fi
-          done
+          cp -R Source Docs Examples Scripts artifacts/MossUnreal/
 
       - name: Upload validated source package
         uses: actions/upload-artifact@v6

@@ -1,17 +1,17 @@
 #include "MossUnreal.h"
 
+#include "Diagnostics/MossDiagnostics.h"
+
 #define LOCTEXT_NAMESPACE "FMossUnrealModule"
 
 void FMossUnrealModule::StartupModule()
 {
-    // Native Moss library loading belongs here once the distribution model,
-    // ABI version check and platform binaries have been established.
+    FMossDiagnostics::Log(TEXT("MossUnreal module loaded. Register a native Moss backend provider before runtime initialization."));
 }
 
 void FMossUnrealModule::ShutdownModule()
 {
-    // Ensure all Moss worlds and callbacks are destroyed before unloading
-    // a dynamically loaded native library.
+    // UEngineSubsystem owns runtime shutdown after worlds have released their native worlds.
 }
 
 IMPLEMENT_MODULE(FMossUnrealModule, MossUnreal)
