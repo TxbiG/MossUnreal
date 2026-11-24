@@ -120,6 +120,8 @@ for header in (
     assert header in native_header, f"Native header boundary is missing {header}"
 
 for option in ("MOSS_INCLUDE_DIR", "MOSS_LIBRARY_FILE", "MOSS_EXTRA_LIBRARIES", "MOSS_ENABLE_GUI", "MOSS_ENABLE_XR", "MOSS_ENABLE_PHYSICS", "MOSS_PHYSICS_HEADERS_READY", "MOSS_GRAPHICS_VULKAN", "MOSS_GRAPHICS_DIRECTX", "MOSS_GRAPHICS_OPENGL", "MOSS_GRAPHICS_OPENGLES", "MOSS_GRAPHICS_METAL"):
+build_cs = (ROOT / "Source/MossUnreal/MossUnreal.Build.cs").read_text(encoding="utf-8")
+for option in ("MOSS_INCLUDE_DIR", "MOSS_LIBRARY_FILE", "MOSS_EXTRA_LIBRARIES", "MOSS_ENABLE_GUI", "MOSS_ENABLE_XR", "MOSS_GRAPHICS_VULKAN", "MOSS_GRAPHICS_DIRECTX", "MOSS_GRAPHICS_OPENGL", "MOSS_GRAPHICS_OPENGLES", "MOSS_GRAPHICS_METAL"):
     assert option in build_cs, f"Build.cs does not configure {option}"
 
 resources_header = (ROOT / "Source/MossUnreal/Public/Resources/Resources.h").read_text(encoding="utf-8")
@@ -137,6 +139,7 @@ for blocker in ("Resources/Config.h", "Resources/Tween.h", "Resources/Gradient.h
 native_class_map = (ROOT / "Docs/NativeClassMap.md").read_text(encoding="utf-8")
 for header in ("Moss_Platform.h", "Moss_Audio.h", "Moss_Network.h", "Moss_GUI.h", "Moss_XR.h", "Resources/Timer.h"):
     assert header in native_class_map, f"Native class map does not document {header}"
+
 
 # UnrealJolt-style opt-in actor tags and strict single-owner Chaos policy.
 settings_header = (ROOT / "Source/MossUnreal/Public/Physics/MossPhysicsSettings.h").read_text(encoding="utf-8")
