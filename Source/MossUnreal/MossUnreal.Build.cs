@@ -15,7 +15,8 @@ public class MossUnreal : ModuleRules
             "CoreUObject",
             "Engine",
             "InputCore",
-            "Json"
+            "Json",
+            "DeveloperSettings"
         });
 
         PrivateDependencyModuleNames.AddRange(new[] { "Projects" });
@@ -24,6 +25,8 @@ public class MossUnreal : ModuleRules
         bool bHasMossLibrary = false;
         bool bEnableMossGui = ReadBoolEnvironmentVariable("MOSS_ENABLE_GUI");
         bool bEnableMossXr = ReadBoolEnvironmentVariable("MOSS_ENABLE_XR");
+        bool bEnableMossPhysics = ReadBoolEnvironmentVariable("MOSS_ENABLE_PHYSICS");
+        bool bMossPhysicsHeadersReady = ReadBoolEnvironmentVariable("MOSS_PHYSICS_HEADERS_READY");
         bool bMossGraphicsVulkan = ReadBoolEnvironmentVariable("MOSS_GRAPHICS_VULKAN");
         bool bMossGraphicsDirectX = ReadBoolEnvironmentVariable("MOSS_GRAPHICS_DIRECTX");
         bool bMossGraphicsOpenGL = ReadBoolEnvironmentVariable("MOSS_GRAPHICS_OPENGL");
@@ -75,6 +78,20 @@ public class MossUnreal : ModuleRules
 
         if (bHasMossLibrary && !bHasMossHeaders)
             throw new BuildException("MOSS_LIBRARY_FILE was set without MOSS_INCLUDE_DIR.");
+
+        // The direct physics adapter is intentionally opt-in. The Moss revision
+        // supplied for this integration currently has unresolved public-header
+        // dependency issues. Only opt in after the upstream header chain is fixed
+        // and a standalone C++17 smoke test passes against that exact checkout.
+        if (bEnableMossPhysics)
+        {
+            if (!bHasMossHeaders || !bHasMossLibrary)
+                throw new BuildException("MOSS_ENABLE_PHYSICS requires both MOSS_INCLUDE_DIR and MOSS_LIBRARY_FILE.");
+            if (!bMossPhysicsHeadersReady)
+                throw new BuildException("MOSS_ENABLE_PHYSICS requires MOSS_PHYSICS_HEADERS_READY=1 after validating the Moss Physics public headers with a standalone C++17 build.");
+            PublicDefinitions.Remove("MOSSUNREAL_ENABLE_MOSS_PHYSICS=0");
+            PublicDefinitions.Add("MOSSUNREAL_ENABLE_MOSS_PHYSICS=1");
+        }
 
         if (bHasMossHeaders && bHasMossLibrary)
         {

@@ -6,7 +6,7 @@
 
 void FMossUnrealModule::StartupModule()
 {
-    FMossDiagnostics::Log(TEXT("MossUnreal module loaded. Register a native Moss backend provider before runtime initialization."));
+    FMossDiagnostics::Log(TEXT("MossUnreal module loaded. Moss Physics uses a direct per-UWorld PhysicsSystem integration when explicitly enabled; optional service backends remain independently registerable."));
 }
 
 void FMossUnrealModule::ShutdownModule()

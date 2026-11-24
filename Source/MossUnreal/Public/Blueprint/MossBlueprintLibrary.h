@@ -34,15 +34,11 @@ public:
     static FString MossMakeUniqueId();
 
     UFUNCTION(BlueprintPure, Category="Moss|Math")
-    static double MossRemap(double Value, double InputMinimum, double InputMaximum,
-                            double OutputMinimum, double OutputMaximum, bool bClamp = false);
+    static double MossRemap(double Value, double InputMinimum, double InputMaximum, double OutputMinimum, double OutputMaximum, bool bClamp = false);
 
     UFUNCTION(BlueprintPure, Category="Moss|Utilities")
     static float MossClampDeltaSeconds(float DeltaSeconds, float Maximum = 0.25f);
 
     UFUNCTION(BlueprintCallable, Category="Moss|Physics", meta=(WorldContext="WorldContextObject", DisplayName="Moss Raycast"))
-    static bool MossRaycast(const UObject* WorldContextObject,
-                            FVector Start,
-                            FVector End,
-                            FMossPhysicsRaycastHit& OutHit);
+    static bool MossRaycast(const UObject* WorldContextObject, FVector Start, FVector End, FMossPhysicsRaycastHit& OutHit);
 };

@@ -85,9 +85,8 @@
     #define MOSSUNREAL_XR_API_AVAILABLE 0
 #endif
 
-#if defined(MOSSUNREAL_ENABLE_MOSS_PHYSICS) && MOSSUNREAL_ENABLE_MOSS_PHYSICS
-    #error "Moss physics headers in this framework revision are not compile-ready; see Docs/NATIVE_HEADER_AUDIT.md."
-#endif
+// Physics is included privately by MossPhysicsScene.cpp only. Do not include
+// the full physics dependency graph from this general-purpose umbrella header.
 #if defined(MOSSUNREAL_ENABLE_MOSS_NAVIGATION) && MOSSUNREAL_ENABLE_MOSS_NAVIGATION
     #error "Moss navigation headers in this framework revision are not compile-ready; see Docs/NATIVE_HEADER_AUDIT.md."
 #endif

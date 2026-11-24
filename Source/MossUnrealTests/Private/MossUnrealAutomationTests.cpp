@@ -7,6 +7,7 @@
 #include "Data/MossDataStore.h"
 #include "Math/MossMath.h"
 #include "Physics/MossPhysicsUnits.h"
+#include "Physics/MossPhysicsSettings.h"
 #include "Systems/MossSystem.h"
 #include "Utilities/MossUtilities.h"
 
@@ -31,8 +32,42 @@ bool FMossPhysicsUnitsAutomationTest::RunTest(const FString& Parameters)
 {
     TestEqual(TEXT("100 Unreal centimetres convert to one Moss metre"), FMossPhysicsUnits::ToMossMeters(100.0), 1.0);
     TestEqual(TEXT("One Moss metre converts to 100 Unreal centimetres"), FMossPhysicsUnits::ToUnrealCentimeters(1.0), 100.0);
-    const FVector MossVector = FMossPhysicsUnits::ToMossMeters(FVector(100.0, -250.0, 50.0));
-    TestTrue(TEXT("Vector conversion scales each axis"), MossVector.Equals(FVector(1.0, -2.5, 0.5)));
+    const FVector UnrealVector(100.0, -250.0, 50.0);
+    const FVector MossVector = FMossPhysicsUnits::ToMossMeters(UnrealVector);
+    TestTrue(TEXT("Vector conversion remaps Z-up to Y-up and converts centimetres to metres"),
+        MossVector.Equals(FVector(1.0, 0.5, 2.5), 1.0e-6));
+    TestTrue(TEXT("Vector conversion round-trips"),
+        FMossPhysicsUnits::ToUnrealCentimeters(MossVector).Equals(UnrealVector, 1.0e-6));
+
+    const FQuat UnrealRotation = FRotator(17.0, -31.0, 42.0).Quaternion();
+    const FQuat RoundTripRotation = FMossPhysicsUnits::ToUnrealRotation(
+        FMossPhysicsUnits::ToMossRotation(UnrealRotation));
+    TestTrue(TEXT("Quaternion basis conversion round-trips"), RoundTripRotation.Equals(UnrealRotation, 1.0e-5));
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMossPhysicsLayerSettingsAutomationTest,
+    "MossUnreal.Physics.CollisionLayerDefaults",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FMossPhysicsLayerSettingsAutomationTest::RunTest(const FString& Parameters)
+{
+    const UMossPhysicsSettings* Settings = GetDefault<UMossPhysicsSettings>();
+    TestNotNull(TEXT("Moss Physics project settings are available"), Settings);
+    if (!Settings)
+    {
+        return false;
+    }
+
+    FString Error;
+    TestTrue(TEXT("Default object and broadphase layers validate"), Settings->ValidateLayers(Error));
+    TestEqual(TEXT("WorldStatic maps to object layer zero"), Settings->FindObjectLayer(TEXT("WorldStatic")), 0);
+    TestEqual(TEXT("WorldDynamic maps to object layer one"), Settings->FindObjectLayer(TEXT("WorldDynamic")), 1);
+    TestEqual(TEXT("Character maps to object layer two"), Settings->FindObjectLayer(TEXT("Character")), 2);
+    TestEqual(TEXT("Vehicle maps to object layer three"), Settings->FindObjectLayer(TEXT("Vehicle")), 3);
+    TestEqual(TEXT("Sensor maps to object layer four"), Settings->FindObjectLayer(TEXT("Sensor")), 4);
+    TestEqual(TEXT("Unknown layer safely falls back to layer zero"), Settings->FindObjectLayer(TEXT("MissingLayer")), 0);
     return true;
 }
 
